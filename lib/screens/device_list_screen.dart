@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../models/device.dart';
 import '../services/platform_service.dart';
 import '../services/file_service.dart';
@@ -17,7 +18,27 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   @override
   void initState() {
     super.initState();
-    startDiscovery();
+    initDiscovery();
+  }
+
+  Future<void> initDiscovery() async {
+    // Request permissions before starting
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.location,
+    ].request();
+
+    if (statuses.values.every((status) => status.isGranted)) {
+      startDiscovery();
+    } else {
+      // Handle permission denied
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Permissions required for discovery")),
+        );
+      }
+    }
   }
 
   void startDiscovery() async {
